@@ -26,7 +26,7 @@ dagshub.init(repo_owner='manikantmnnit', repo_name='mini_project_mlops', mlflow=
 
 # Load the data
 df = pd.read_csv('https://raw.githubusercontent.com/campusx-official/jupyter-masterclass/main/tweet_emotions.csv').drop(columns=['tweet_id'])
-df.head()
+
 
 # Define text preprocessing functions
 def lemmatization(text):
@@ -81,7 +81,9 @@ def normalize_text(df):
 
 
 # Normalize the text data
+# Normalize the text data
 df = normalize_text(df)
+df=df.sample(round(len(df)*0.5), random_state=42, replace=False).reset_index() # Sample the data to reduce computation time
 
 # map sentiment to integer
 sentiment={'empty':0,'sadness':1,'enthusiasm':2,'neutral':3,'worry':4,'surprise':5,'love':6,'fun':7,'hate':8,'happiness':9,'boredom':10,'relief':11,'anger':12}
@@ -127,26 +129,26 @@ with mlflow.start_run(run_name="All Experiments") as parent_run:
                 
                 # Log model parameters
                 if algo_name == 'LogisticRegression':
-                    mlflow.log_param("C", model.C)
+                    mlflow.log_param("C", model.C) # `C` is the inverse of regularization strength
                 elif algo_name == 'MultinomialNB':
-                    mlflow.log_param("alpha", model.alpha)
+                    mlflow.log_param("alpha", model.alpha) # `alpha` is the Laplace smoothing parameter
                 elif algo_name == 'XGBoost':
-                    mlflow.log_param("n_estimators", model.n_estimators)
-                    mlflow.log_param("learning_rate", model.learning_rate)
+                    mlflow.log_param("n_estimators", model.n_estimators) # `n_estimators` is the number of boosting rounds
+                    mlflow.log_param("learning_rate", model.learning_rate) # `learning_rate` is the step size shrinkage used to prevent overfitting
                 elif algo_name == 'RandomForest':
-                    mlflow.log_param("n_estimators", model.n_estimators)
-                    mlflow.log_param("max_depth", model.max_depth)
+                    mlflow.log_param("n_estimators", model.n_estimators) # `n_estimators` is the number of trees in the forest
+                    mlflow.log_param("max_depth", model.max_depth) # `max_depth` is the maximum depth of the tree
                 elif algo_name == 'GradientBoosting':
-                    mlflow.log_param("n_estimators", model.n_estimators)
-                    mlflow.log_param("learning_rate", model.learning_rate)
-                    mlflow.log_param("max_depth", model.max_depth)
+                    mlflow.log_param("n_estimators", model.n_estimators) # `n_estimators` is the number of boosting rounds
+                    mlflow.log_param("learning_rate", model.learning_rate) # `learning_rate` is the step size shrinkage used to prevent overfitting
+                    mlflow.log_param("max_depth", model.max_depth) # `max_depth` is the maximum depth of the tree
                 
                 # Model evaluation
                 y_pred = model.predict(X_test)
-                accuracy = accuracy_score(y_test, y_pred)
-                precision = precision_score(y_test, y_pred)
-                recall = recall_score(y_test, y_pred)
-                f1 = f1_score(y_test, y_pred)
+                accuracy = accuracy_score(y_test, y_pred, normalize=True)
+                precision = precision_score(y_test, y_pred, average='weighted')
+                recall = recall_score(y_test, y_pred, average='weighted')
+                f1 = f1_score(y_test, y_pred, average='weighted')
                 
                 # Log evaluation metrics
                 mlflow.log_metric("accuracy", accuracy)
